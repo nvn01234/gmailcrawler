@@ -3,7 +3,7 @@ import Message from './models/message';
 import gmailApi from './gmail-api';
 
 gmailApi.load().then(async (auth) => {
-    await gmailApi.listMessages(auth, processMessage);
+    await gmailApi.listMessages(auth, processMessages);
     await crawlMessageCycle(10, auth);
 });
 
