@@ -24,6 +24,7 @@ const messageSchema = mongoose.Schema({
     },
     sizeEstimate: Number,
     raw: String,
+    extracted: Boolean,
 });
 const Message = mongoose.model('Message', messageSchema);
 
