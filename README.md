@@ -26,4 +26,4 @@ Sửa index.js
     
 ### Chú ý
 
-Mỗi bước nhỏ tại bước 2 & 3 chỉ được chạy đơn, không chạy nhiều bước nhỏ 1 lúc (ném vào then() thì được)
+Lần đầu chạy, tại console sẽ yêu cầu truy cập 1 link oAuth để lấy token, sau đó dán vào console
