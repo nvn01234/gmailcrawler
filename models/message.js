@@ -24,7 +24,13 @@ const messageSchema = mongoose.Schema({
     },
     sizeEstimate: Number,
     raw: String,
-    extracted: Boolean,
+    extractedFeatures: {
+        raw: String,
+        normalized: String,
+        label: String,
+        numOfImage: Number,
+        numOfLink: Number,
+    },
 });
 const Message = mongoose.model('Message', messageSchema);
 

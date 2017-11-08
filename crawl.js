@@ -3,31 +3,32 @@ import Message from './models/message';
 import gmailApi from './gmail-api';
 
 function run() {
-    gmailApi.load().then(async (auth) => {
-        await gmailApi.listMessages(auth, processMessages);
-        await crawlMessageCycle(10, auth);
+    gmailApi.load().then(auth => {
+        gmailApi.listMessages(auth, processMessages).then(done);
+        crawlMessageCycle(auth).then(done);
     });
 }
 
-async function crawlMessageCycle(perCycle, auth) {
-    const messages = await Message.find({snippet: null}).limit(perCycle);
-    if (!messages.length) {
+function done() {
+    console.log("done");
+}
+
+async function crawlMessageCycle(auth) {
+    const message = await Message.findOne({snippet: null});
+    if (!message) {
         return Promise.resolve();
+    } else {
+        await processMessage(auth, message);
+        return crawlMessageCycle(auth);
     }
-    const promises = messages.map(m => processMessage(auth, m));
-    await Promise.all(promises);
-    return crawlMessageCycle(perCycle, auth);
 }
 
-function processMessage(auth, m) {
-    return new Promise(async (resolve, reject) => {
-        let message = await gmailApi.getMessage(auth, m.id);
-        Object.keys(message).forEach(k => {
-            m[k] = message[k];
-        });
-        await m.save();
-        resolve();
+async function processMessage(auth, m) {
+    let message = await gmailApi.getMessage(auth, m.id);
+    Object.keys(message).forEach(k => {
+        m[k] = message[k];
     });
+    return m.save();
 }
 
 function processMessages(messages) {

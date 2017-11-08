@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node index.js",
+    "start": "babel-node index.js --max-old-space-size=4096",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -17,7 +17,6 @@
     "google-auth-library": "^0.11.0",
     "googleapis": "^22.2.0",
     "mongodb": "^2.2.33",
-    "mongoose": "^4.13.0",
-    "sanitize-html": "^1.15.0"
+    "mongoose": "^4.13.0"
   }
 }

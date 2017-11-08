@@ -25,9 +25,9 @@ function authorize(credentials) {
 
     // Check if we have previously stored a token.
     return new Promise((resolve, reject) => {
-        fs.readFile(TOKEN_PATH, async function(err, token) {
+        fs.readFile(TOKEN_PATH, function(err, token) {
             if (err) {
-                resolve(await getNewToken(oauth2Client));
+                getNewToken(oauth2Client).then(resolve);
             } else {
                 oauth2Client.credentials = JSON.parse(token);
                 resolve(oauth2Client);
@@ -92,14 +92,14 @@ function storeToken(token) {
 // Load client secrets from a local file.
 function load() {
     return new Promise((resolve, reject) => {
-        fs.readFile('client_secret.json', async function processClientSecrets(err, content) {
+        fs.readFile('client_secret.json', function processClientSecrets(err, content) {
             if (err) {
                 console.log('Error loading client secret file: ' + err);
                 reject(err);
             }
             // Authorize a client with the loaded credentials, then call the
             // Gmail API.
-            resolve(await authorize(JSON.parse(content)));
+            authorize(JSON.parse(content)).then(resolve);
         });
     });
 }
@@ -118,16 +118,17 @@ function listMessages(auth, processMessages) {
                 if (err) {
                     console.log('The API returned an error: ' + err);
                     reject(err);
-                }
-                let messages = response.messages;
-                processMessages(messages);
-                console.log(`+ ${messages.length} messages`);
-                let nextPageToken = response.nextPageToken;
-                if (nextPageToken) {
-                    params["pageToken"] = nextPageToken;
-                    getPageOfMessages(gmail, params);
                 } else {
-                    resolve();
+                    let messages = response.messages;
+                    processMessages(messages);
+                    console.log(`+ ${messages.length} messages`);
+                    let nextPageToken = response.nextPageToken;
+                    if (nextPageToken) {
+                        params["pageToken"] = nextPageToken;
+                        getPageOfMessages(gmail, params);
+                    } else {
+                        resolve();
+                    }
                 }
             });
         };
