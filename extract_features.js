@@ -1,9 +1,12 @@
-import Message from './models/message'
+import Message from './models/message';
+import Feature from './models/feature';
 const fs = require('fs');
+const striptags = require('striptags');
 
 function run() {
     // clearExtract().then(done);
     // extractFeature().then(done);
+    // clearExported().then(done);
     toFile().then(done);
 }
 
@@ -12,30 +15,26 @@ function done() {
 }
 
 async function clearExtract() {
-    let messages = await Message.find({"extractedFeatures": {"$exists": true}});
-    let promises = messages.map(m => {
-        m.extractedFeatures = undefined;
-        return m.save();
-    });
-    return Promise.all(promises);
+    return Message.update({}, {"$unset": {"extracted": 1}}, {"multi": true});
 }
 
 async function extractFeature() {
-    let message = await Message.findOne({"extractedFeatures": {"$exists": false}});
+    let message = await Message.findOne({"extracted": {"$exists": false}});
     if (message) {
         console.log(`extract message ${message.id}`);
-        let extractedFeatures = {};
+        let extractedFeatures = {messageId: message.id};
         extractedFeatures.label = message.labelIds.some(label => ["CATEGORY_PROMOTIONS", "SPAM"].includes(label)) ? "SPAM" : "NON-SPAM";
         extractBody(extractedFeatures, message.payload);
         if (!('raw' in extractedFeatures)) {
             extractedFeatures.raw = extractedFeatures.normalized;
-            extractedFeatures.numOfImage = countImage(extractedFeatures.raw);
-            extractedFeatures.numOfLink = countLink(extractedFeatures.raw);
-        }
-        if (!('normalized' in extractedFeatures)) {
+        } else if (!('normalized' in extractedFeatures)) {
             extractedFeatures.normalized = extractedFeatures.raw;
         }
-        message.extractedFeatures = extractedFeatures;
+        extractedFeatures.normalized = strip(extractedFeatures.normalized);
+        extractedFeatures.numOfLink = countLink(extractedFeatures.raw);
+        extractedFeatures.numOfImage = countImage(extractedFeatures.raw);
+        await Feature.create(extractedFeatures);
+        message.extracted = true;
         await message.save();
         return extractFeature();
     } else {
@@ -50,9 +49,11 @@ function extractBody(extractedFeatures, payload) {
         extractedFeatures.normalized = new Buffer(payload.body.data, "base64").toString();
     } else if (payload.mimeType == "text/html" && "data" in payload.body) {
         extractedFeatures.raw = new Buffer(payload.body.data, "base64").toString();
-        extractedFeatures.numOfImage = countImage(extractedFeatures.raw);
-        extractedFeatures.numOfLink = countLink(extractedFeatures.raw);
     }
+}
+
+function strip(str) {
+    return striptags(str.replace(/<style[^>]*>[^<]*<\/style>/g, ' '), [], ' ').replace(/ +/g, ' ');
 }
 
 function countImage(html) {
@@ -63,17 +64,38 @@ function countLink(html) {
     return (html.match(/https?:\/\/[^ ]+/g) || []).length;
 }
 
-async function toFile() {
-    let messages = await Message.find({"extractedFeatures": {"$exists": true}});
-    messages = messages.map(m => m.extractedFeatures);
-    let json = JSON.stringify(messages);
-    fs.writeFile("extracted.json", json, function(err) {
-        if(err) {
-            return console.log(err);
-        }
+async function clearExported() {
+    return Feature.update({}, {"$unset": {"exported": 1}}, {"multi": true});
+}
 
-        console.log("The file was saved!");
-    });
+async function toFile(cycle = 1) {
+    let features = await Feature.find({"exported": {"$exists": false}}).limit(10000);
+    if (features.length) {
+        let data = features.map(exportFeature);
+        let json = JSON.stringify(data);
+        fs.writeFile(`data/extracted_part_${cycle}.json`, json, function(err) {
+            if(err) {
+                return console.log(err);
+            }
+
+            console.log("The file was saved!");
+        });
+        let ids = features.map(f => f._id);
+        await Feature.update({"_id": {"$in": ids}}, {"$set": {"exported": true}}, {"multi": true});
+        return toFile(cycle + 1);
+    } else {
+        return Promise.resolve();
+    }
+}
+
+function exportFeature(feature) {
+    return {
+        label: feature.label,
+        normalized: feature.normalized,
+        raw: feature.raw,
+        numOfLink: feature.numOfLink,
+        numOfImage: feature.numOfImage,
+    }
 }
 
 export default run
