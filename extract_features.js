@@ -3,10 +3,21 @@ import Feature from './models/feature';
 const fs = require('fs');
 const striptags = require('striptags');
 
+// Cần bước nào thì comment các bước còn lại, chỉ để lại 1 bước cần chạy
 function run() {
-    // clearExtract().then(done);
-    // extractFeature().then(done);
-    // clearExported().then(done);
+    // Xoá trạng thái extract của message, để chạy lại hàm extractFeature từ đầu
+    // Cần xoá collection features bằng tay
+    clearExtract().then(done);
+
+    // extract message ra thành feature cần (raw, normalized, numOfLink, numOfImage, v.v...)
+    extractFeature().then(done);
+
+    // Xoá trạng thái export của các feature, để chạy lại hàm toFile từ đầu
+    // Cần xoá file json trong thư mục data
+    clearExported().then(done);
+
+    // Tạo thư mục data trong project
+    // Chạy hàm này để chuyển mongoDB thành json, để import vào mysql
     toFile().then(done);
 }
 
