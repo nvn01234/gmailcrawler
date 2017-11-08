@@ -17,6 +17,7 @@
     "google-auth-library": "^0.11.0",
     "googleapis": "^22.2.0",
     "mongodb": "^2.2.33",
-    "mongoose": "^4.13.0"
+    "mongoose": "^4.13.0",
+    "sanitize-html": "^1.15.0"
   }
 }

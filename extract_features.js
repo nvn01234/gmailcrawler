@@ -1,9 +1,28 @@
 import MessagePart from './models/message_part'
 import Message from './models/message'
+const fs = require('fs');
+const sanitizeHtml = require('sanitize-html');
 
 function run() {
     // clear().then(() => {})
-    extractMessageCycle(10).then(() => {});
+    // extractMessageCycle(10).then(() => {});
+    toFile().then(() => {});
+}
+
+async function toFile() {
+    let parts = await MessagePart.find();
+    parts = parts.map(p => sanitizeHtml(p.data, {
+        allowedTags: [],
+        allowedAttributes: []
+    })).map(data => data.replace(/\s+/g, " ").trim()).map(data => {return {data: data}});
+    let json = JSON.stringify(parts);
+    fs.writeFile("extracted.json", json, function(err) {
+        if(err) {
+            return console.log(err);
+        }
+
+        console.log("The file was saved!");
+    });
 }
 
 async function clear() {
