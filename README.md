@@ -1,10 +1,12 @@
 ### Bước 1
 
+Tạo db `gmail`
+
     $ npm install
   
 ### Bước 2: crawl
 
-Sửa index.js
+Sửa `index.js`
     
     crawl();
     // extract();
@@ -15,7 +17,7 @@ Sửa index.js
 
 ### Bước 3: extract feature
 
-Sửa index.js
+Sửa `index.js`
 
     // crawl();
     extract();
