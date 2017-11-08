@@ -32,9 +32,10 @@ async function processMessage(auth, m) {
 }
 
 function processMessages(messages) {
-    messages.forEach(message => {
-        Message.create(message).then(() => {});
-    });
+    Message.insertMany(messages).then(() => {console.log(`inserted ${messages.length}`)});
+    // messages.forEach(message => {
+    //     Message.create(message).then(() => {});
+    // });
 }
 
 export default run
