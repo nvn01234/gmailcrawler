@@ -1,6 +1,6 @@
 ### Bước 1
 
-Tạo db `gmail`
+Tạo db `gmail` trong mongo
 
     $ npm install
   
